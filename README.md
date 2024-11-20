@@ -39,43 +39,27 @@ Please import the "DbgDraw Examples" file, which part of this package, for more 
 # Limitations
 
 * DbgDraw works with Unity 2020.3 and later versions.
-* DbgDraw works in the Unity editor and [development mode](https://docs.unity3d.com/Manual/BuildSettings.html).
+* DbgDraw works when you have defined `DBG_DRAW_ENABLED` and `DbgDraw.Enabled` is set to true (which it is by default).
 * DbgDraw works in play mode only.
-* DbgDraw has been created for visual debugging purposes, not as a fast general purpose shape rendering API.
+* DbgDraw has been created for visual debugging purposes ONLY! It is NOT as a fast general purpose shape rendering API.
 
 
 # Installation
 
-Open in Unity Window > Package Manager, choose "Add package from git URL" and insert one of the Package URL's you can find below.
-
-## Package URL's
-
-I recommend to right-click the URL below and choose "Copy Link" rather than selecting the text and copying it, because sometimes it copies a space at the end and the Unity Package Manager can't handle it and spits out an error when you try to add the package.
-
-Please see the ```CHANGELOG.md``` file to see what's changed in each version.
-
-| Version  |     Link      |
-|----------|:-------------:|
-| 1.2.0 | https://github.com/pschraut/UnityDbgDraw.git#1.2.0 |
-| 1.1.0 | https://github.com/pschraut/UnityDbgDraw.git#1.1.0 |
-| 1.0.0 | https://github.com/pschraut/UnityDbgDraw.git#1.0.0 |
-
-
+~~Open in Unity Window > Package Manager, choose "Add package from git URL" and insert one of the Package URL's you can find below.~~
+Copy the contents of this repo (minus the `.git` folder) into a new folder named `Assets/Plugins/DrawDbg`.
 
 # FAQ
 
-### It's not working in the editor
+### It's not working in the editor/in a build
 
-DbgDraw works in the editor only, if you tick the ```Development Build``` checkbox in the Build Settings window (File > Build Settings).
-
-### It's not working in a build
-
-DbgDraw works in a build only, if you tick the ```Development Build``` checkbox in the Build Settings window (File > Build Settings).
+DbgDraw is enabled when you define `DBG_DRAW_ENABLED` in the player settings, and `DBG_DRAW_DISABLED` is NOT defined.
 
 ### Remove DbgDraw calls from release builds
 
-If you untick the ```Development Build``` checkbox in the Build Settings window (File > Build Settings), calls to DbgDraw are being removed by the compiler.
+Remove `DBG_DRAW_ENABLED` from the defined symbols in the player settings (make sure to check any overriden values in your active build profile).
 
 ### "Hidden/DbgDraw-Shaded" in Always Included Shaders
 
-The package automatically adds the ```Hidden/DbgDraw-Shaded``` shader to the 'Always Included Shaders' list in the Player settings when you create a build. This is required to make the DbgDraw package work in a build. It's a very simple shader that does add a trivial amount of size to the build.
+When enabled, this plugin automatically adds the ```Hidden/DbgDraw-Shaded``` shader to the 'Always Included Shaders' list in the Player settings when you create a build. This is required to make the DbgDraw package work in a build. It's a very simple shader that does add a trivial amount of size to the build.
+When disabled, this shader is removed from said list and shouldn't appear in the build report. If it's still being included then something is referencing it and you'll need to find out what that is.
