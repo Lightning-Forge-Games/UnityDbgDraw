@@ -1,7 +1,11 @@
 ﻿// DbgDraw for Unity. Copyright (c) 2019-2024 Peter Schraut (www.console-dev.de). See LICENSE.md
 // https://github.com/pschraut/UnityDbgDraw
+
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
+using UnityEngine.Rendering;
+
 #pragma warning disable IDE0018 // Variable declaration can be inlined
 #pragma warning disable IDE0017 // Object initialization can be simplified
 
@@ -9,15 +13,22 @@ namespace Oddworm.Framework
 {
     public partial class DbgDraw
     {
-        static Mesh s_WireCubeMesh = null;
+        private static Mesh s_WireCubeMesh;
 
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
-        public static void WireCube(Vector3 position, Quaternion rotation, Vector3 scale, Color color, float duration = 0, bool depthTest = true)
+        [Conditional("DBG_DRAW_ENABLED")]
+        public static void WireCube(
+            Vector3 position,
+            Quaternion rotation,
+            Vector3 scale,
+            Color color,
+            float duration = 0,
+            bool depthTest = true)
         {
             MeshJob job;
-            if (!TryAllocMeshJob(out job, duration, depthTest, UnityEngine.Rendering.CullMode.Off, true))
+            if (!TryAllocMeshJob(out job, duration, depthTest, CullMode.Off, true))
+            {
                 return;
+            }
 
             if (s_WireCubeMesh == null)
             {
@@ -32,14 +43,14 @@ namespace Oddworm.Framework
             job.Submit();
         }
 
-        static Mesh CreateWireCubeMesh()
+        private static Mesh CreateWireCubeMesh()
         {
-            var mesh = new Mesh();
+            Mesh mesh = new();
             mesh.name = "DbgDraw-WireCube-Mesh";
 
             var vertices = new List<Vector3>(24);
 
-            var s = 1.0f * 0.5f;
+            float s = 1.0f * 0.5f;
             vertices.Add(new Vector3(-s, -s, -s)); // bottom near left
             vertices.Add(new Vector3(-s, -s, +s)); // bottom far left
             vertices.Add(new Vector3(-s, -s, +s)); // bottom far left
@@ -70,9 +81,12 @@ namespace Oddworm.Framework
 
             mesh.SetVertices(vertices);
 
-            var indices = new int[vertices.Count];
-            for (var n = 0; n < indices.Length; ++n)
+            int[] indices = new int[vertices.Count];
+            for (int n = 0; n < indices.Length; ++n)
+            {
                 indices[n] = n;
+            }
+
             mesh.SetIndices(indices, MeshTopology.Lines, 0);
 
             return mesh;

@@ -1,6 +1,10 @@
 ﻿// DbgDraw for Unity. Copyright (c) 2019-2024 Peter Schraut (www.console-dev.de). See LICENSE.md
 // https://github.com/pschraut/UnityDbgDraw
+
+using System.Diagnostics;
 using UnityEngine;
+using UnityEngine.Rendering;
+
 #pragma warning disable IDE0018 // Variable declaration can be inlined
 #pragma warning disable IDE0017 // Object initialization can be simplified
 
@@ -8,15 +12,22 @@ namespace Oddworm.Framework
 {
     public partial class DbgDraw
     {
-        static Mesh s_SphereMesh = null;
+        private static Mesh s_SphereMesh;
 
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
-        public static void Sphere(Vector3 position, Quaternion rotation, Vector3 scale, Color color, float duration = 0, bool depthTest = true)
+        [Conditional("DBG_DRAW_ENABLED")]
+        public static void Sphere(
+            Vector3 position,
+            Quaternion rotation,
+            Vector3 scale,
+            Color color,
+            float duration = 0,
+            bool depthTest = true)
         {
             MeshJob job;
-            if (!TryAllocMeshJob(out job, duration, depthTest, UnityEngine.Rendering.CullMode.Back, true))
+            if (!TryAllocMeshJob(out job, duration, depthTest, CullMode.Back, true))
+            {
                 return;
+            }
 
             if (s_SphereMesh == null)
             {
@@ -31,9 +42,9 @@ namespace Oddworm.Framework
             job.Submit();
         }
 
-        static Mesh CreateSphereMesh()
+        private static Mesh CreateSphereMesh()
         {
-            var mesh = CreateMesh(PrimitiveType.Sphere);
+            Mesh mesh = CreateMesh(PrimitiveType.Sphere);
             mesh.name = "DbgDraw-Sphere-Mesh";
             return mesh;
         }

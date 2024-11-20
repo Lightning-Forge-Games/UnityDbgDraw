@@ -14,8 +14,10 @@ namespace Oddworm.EditorFramework
 
     // The DbgDrawBuildProcessor is responsible for adding the required shaders to the GraphicsSettings > Always Included Shaders list.
     // Without the shaders added to this list, they can't be found by the application at runtime, eg a Windows or Android build.
-    class DbgDrawBuildProcessor : IPreprocessBuildWithReport
+    internal class DbgDrawBuildProcessor : IPreprocessBuildWithReport
     {
+        private static string SHADER_NAME = "Hidden/DbgDraw-Shaded";
+
         public int callbackOrder => -100;
 
         public void OnPreprocessBuild(BuildReport report)
@@ -37,30 +39,52 @@ namespace Oddworm.EditorFramework
                 return;
             }
 
-            TryAddShader(includedShadersProp, "Hidden/DbgDraw-Shaded");
+            Shader shader = Shader.Find(SHADER_NAME);
+            if (shader == null)
+            {
+                Debug.LogError($"{nameof(DbgDrawBuildProcessor)}: Cannot find shader with name '{SHADER_NAME}'");
+                return;
+            }
+
+            // DBG_DRAW_DISABLE overrides DBG_DRAW_ENABLE, useful in situations where it's easier to
+            // add a new symbol than remove an existing one
+#if DBG_DRAW_ENABLED && !DBG_DRAW_DISABLED
+            AddShader(includedShadersProp, shader);
+#else
+            RemoveShader(includedShadersProp, shader);
+#endif
 
             serObj.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        void TryAddShader(SerializedProperty includedShadersProp, string shaderName)
+        private void AddShader(SerializedProperty includedShadersProp, Shader shader)
         {
-            Shader shader = Shader.Find(shaderName);
-            if (shader == null)
-            {
-                Debug.LogError($"{nameof(DbgDrawBuildProcessor)}: Cannot find shader with name '{shaderName}'");
-                return;
-            }
-
+            // add shader if not present
             for (int i = 0, count = includedShadersProp.arraySize; i < count; ++i)
             {
                 var element = includedShadersProp.GetArrayElementAtIndex(i);
                 if (element.objectReferenceValue == shader)
+                {
                     return; // Shader added already
+                }
             }
 
             includedShadersProp.arraySize++;
             var shaderProp = includedShadersProp.GetArrayElementAtIndex(includedShadersProp.arraySize - 1);
             shaderProp.objectReferenceValue = shader;
+        }
+
+        private void RemoveShader(SerializedProperty includedShadersProp, Shader shader)
+        {
+            // remove all occurrences of the provided shader
+            for (int i = 0; i < includedShadersProp.arraySize; ++i)
+            {
+                var element = includedShadersProp.GetArrayElementAtIndex(i);
+                if (element.objectReferenceValue == shader)
+                {
+                    includedShadersProp.DeleteArrayElementAtIndex(i);
+                }
+            }
         }
     }
 }

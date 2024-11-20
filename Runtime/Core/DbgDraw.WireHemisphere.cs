@@ -1,7 +1,11 @@
 ﻿// DbgDraw for Unity. Copyright (c) 2019-2024 Peter Schraut (www.console-dev.de). See LICENSE.md
 // https://github.com/pschraut/UnityDbgDraw
+
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
+using UnityEngine.Rendering;
+
 #pragma warning disable IDE0018 // Variable declaration can be inlined
 #pragma warning disable IDE0017 // Object initialization can be simplified
 
@@ -9,15 +13,22 @@ namespace Oddworm.Framework
 {
     public partial class DbgDraw
     {
-        static Mesh s_WireHemisphereMesh = null;
+        private static Mesh s_WireHemisphereMesh;
 
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
-        public static void WireHemisphere(Vector3 position, Quaternion rotation, Vector3 size, Color color, float duration = 0, bool depthTest = true)
+        [Conditional("DBG_DRAW_ENABLED")]
+        public static void WireHemisphere(
+            Vector3 position,
+            Quaternion rotation,
+            Vector3 size,
+            Color color,
+            float duration = 0,
+            bool depthTest = true)
         {
             MeshJob job;
-            if (!TryAllocMeshJob(out job, duration, depthTest, UnityEngine.Rendering.CullMode.Back, true))
+            if (!TryAllocMeshJob(out job, duration, depthTest, CullMode.Back, true))
+            {
                 return;
+            }
 
             if (s_WireHemisphereMesh == null)
             {
@@ -32,22 +43,22 @@ namespace Oddworm.Framework
             job.Submit();
         }
 
-        static Mesh CreateWireHemisphereMesh()
+        private static Mesh CreateWireHemisphereMesh()
         {
-            var mesh = new Mesh();
+            Mesh mesh = new();
             mesh.name = "DbgDraw-WireHemisphere-Mesh";
 
             var vertices = new List<Vector3>(64 * 3);
-            var s = 0.5f;
+            float s = 0.5f;
 
             // ring around y, full circle
-            var step = kTau / 64;
-            for (var theta = 0.0f; theta < kTau; theta += step)
+            float step = TAU / 64;
+            for (float theta = 0.0f; theta < TAU; theta += step)
             {
-                var cos0 = Mathf.Cos(theta);
-                var cos1 = Mathf.Cos(theta + step);
-                var sin0 = Mathf.Sin(theta);
-                var sin1 = Mathf.Sin(theta + step);
+                float cos0 = Mathf.Cos(theta);
+                float cos1 = Mathf.Cos(theta + step);
+                float sin0 = Mathf.Sin(theta);
+                float sin1 = Mathf.Sin(theta + step);
 
                 vertices.Add(s * new Vector3(cos0, 0, -sin0));
                 vertices.Add(s * new Vector3(cos1, 0, -sin1));
@@ -55,16 +66,18 @@ namespace Oddworm.Framework
 
 
             // sides
-            var stept = kTau / 4;
-            for (var t = 0.0f; t < kTau; t += stept)
+            float stept = TAU / 4;
+            for (float t = 0.0f; t < TAU; t += stept)
             {
-                var yrot = Quaternion.AngleAxis(Mathf.Rad2Deg * t, Vector3.up);
+                Quaternion yrot = Quaternion.AngleAxis(Mathf.Rad2Deg * t, Vector3.up);
 
                 // ring around x, half circle
-                for (var theta = -Mathf.PI; theta < 0; theta += step)
+                for (float theta = -Mathf.PI; theta < 0; theta += step)
                 {
-                    var xrot0 = Quaternion.AngleAxis(Mathf.Rad2Deg * theta, Vector3.right);
-                    var xrot1 = Quaternion.AngleAxis(Mathf.Rad2Deg * (theta + step), Vector3.right);
+                    Quaternion xrot0 = Quaternion.AngleAxis(Mathf.Rad2Deg * theta, Vector3.right);
+                    Quaternion xrot1 = Quaternion.AngleAxis(
+                        Mathf.Rad2Deg * (theta + step),
+                        Vector3.right);
 
                     vertices.Add(yrot * xrot0 * Vector3.forward * s);
                     vertices.Add(yrot * xrot1 * Vector3.forward * s);
@@ -97,9 +110,11 @@ namespace Oddworm.Framework
         }
 #endif
 
-            var indices = new int[vertices.Count];
-            for (var n = 0; n < indices.Length; ++n)
+            int[] indices = new int[vertices.Count];
+            for (int n = 0; n < indices.Length; ++n)
+            {
                 indices[n] = n;
+            }
 
             mesh.SetVertices(vertices);
             mesh.SetIndices(indices, MeshTopology.Lines, 0);
