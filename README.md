@@ -47,6 +47,7 @@ Please import the "DbgDraw Examples" file, which part of this package, for more 
 # Installation
 
 ~~Open in Unity Window > Package Manager, choose "Add package from git URL" and insert one of the Package URL's you can find below.~~
+
 Copy the contents of this repo (minus the `.git` folder) into a new folder named `Assets/Plugins/DrawDbg`.
 
 # FAQ
